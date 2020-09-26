@@ -21,6 +21,7 @@ df = site.parse(table)
 rsf = processFE_df(df)
 # dataframe to real state funds (rsf) being filtered
 rsf = rsf.loc[rsf['dy12macum%'] >= 4.00]  # 1st filter DY > 4%
+rsf = rsf.sort_values(by='dy12macum%',  ascending=False)
 rsf = rsf.loc[rsf['patrliqR$'] >= 500000000.00]  # 2nd filter > BRL 500 M
 rsf = rsf.loc[rsf['liqdiariaNeg'] >= 1000]  # 3rd filter tradings >= 1000/day
 rsf = rsf.loc[rsf['p/vpaN'] <= 1.25]  # 4th filter P/VPA <= 1.25
