@@ -18,7 +18,15 @@ from src.webtableparser import WebTableParser
 from src.fundsexplorer import processFE_df
 import plotly.offline as py
 import plotly.graph_objs as go
+from datetime import datetime
+from pytz import timezone
 #
+# running time reading
+# running time reading
+dt = datetime.now()
+tz = timezone('America/Sao_Paulo')
+dt_sp = dt.astimezone(tz)
+date_time_sp = dt_sp.strftime('%d/%m/%Y %H:%M')
 # site capture and parsing
 site = WebTableParser()
 site.create('https://www.fundsexplorer.com.br/ranking',
@@ -56,6 +64,7 @@ fig0.update_layout(title='ANÁLISE FIIs TIJOLOS | DY Ano >= 4%, Patr. > 500M, \
 Neg/dia > 1000, P/VPA =< 1.25, Ativos >= 10, Vacância Física < 15%')
 fig0.show()
 py.plot(fig0)
+print(date_time_sp)
 # bar chart 2 - paper funds
 x1 = [rsf_paper['setor'], rsf_paper['codigo']]
 trace10 = go.Bar(x=x1, y=rsf_paper['dy12macum%'], name='DY% Ano',
@@ -70,3 +79,4 @@ fig1.update_layout(title='ANÁLISE FIIs PAPEL | DY Ano >= 4%, Patr. > 500M, \
 Neg/dia > 1000, P/VPA =< 1.25')
 fig1.show()
 py.plot(fig1)
+print(date_time_sp)
