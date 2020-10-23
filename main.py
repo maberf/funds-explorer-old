@@ -2,8 +2,8 @@
 # Packages: urllib, beatiful soup, html5, pandas,
 # plotly, jupyter lab
 #
-from webtableparser import WebTableParser
-from fundsexplorer import processFE_df
+from src.webtableparser import WebTableParser
+from src.fundsexplorer import processFE_df
 # import pandas as pd
 # import numpy as np
 # from matplotlib import pyplot as plt
