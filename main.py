@@ -11,7 +11,6 @@
 #
 # packages: urllib, beatiful soup, html5, pandas, plotly, jupyter lab
 #
-from datetime import datetime
 from src.webtableparser import WebTableParser
 from src.fundsexplorer import processFE_df
 import plotly.offline as py
