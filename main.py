@@ -1,12 +1,18 @@
 # MAIN
-# Packages: urllib, beatiful soup, html5, pandas,
-# plotly, jupyter lab
+#
+# # Code to connect Jupyter Notebook in Google Colab
+# from google.colab import drive
+# drive.mount('/content/drive')
+# import sys
+# # Create a folder named src and put the modules webtableparser
+# # and fundsexplorer into it
+# sys.path.append('/content/drive/My Drive/\
+# Colab Notemodules/funds-explorer-filter/src')
+#
+# packages: urllib, beatiful soup, html5, pandas, plotly, jupyter lab
 #
 from src.webtableparser import WebTableParser
 from src.fundsexplorer import processFE_df
-# import pandas as pd
-# import numpy as np
-# from matplotlib import pyplot as plt
 import plotly.offline as py
 import plotly.graph_objs as go
 #
@@ -25,7 +31,7 @@ rsf = rsf.sort_values(by='dy12macum%',  ascending=False)
 rsf = rsf.loc[rsf['patrliqR$'] >= 500000000.00]  # 2nd filter > BRL 500 M
 rsf = rsf.loc[rsf['liqdiariaNeg'] >= 1000]  # 3rd filter tradings >= 1000/day
 rsf = rsf.loc[rsf['p/vpaN'] <= 1.25]  # 4th filter P/VPA <= 1.25
-# Splitting into two new variables: brick and paper funds
+# splitting into two new variables: brick and paper funds
 rsf_brick = rsf.loc[rsf['qtdativosN'] >= 10]  # 5th filter >= 10 assets
 rsf_paper = rsf.loc[rsf['qtdativosN'] == 0]  # 5 th filter = 0 assets
 #
