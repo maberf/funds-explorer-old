@@ -7,7 +7,9 @@
 # # Create a folder named src and put the modules webtableparser
 # # and fundsexplorer into it
 # sys.path.append('/content/drive/My Drive/\
-# Colab Notemodules/funds-explorer-filter/src')
+# Colab Notemodules/funds-explorer-filter')
+# # To check the modules are being reacheble by this code (linux command)
+# # ! ls /content/drive/My\ Drive/Colab\ Notemodules/funds-explorer-filter/src
 #
 # packages: urllib, beatiful soup, html5, pandas, plotly, jupyter lab
 #
