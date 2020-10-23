@@ -50,7 +50,7 @@ trace02 = go.Bar(x=x0, y=rsf_brick['vacfisica%'],
 data0 = [trace00, trace01, trace02]
 fig0 = go.Figure(data0)
 fig0.update_layout(title='ANÁLISE FIIs TIJOLOS | DY Ano >= 4%, Patr. > 500M, \
-    Neg/dia > 1000, P/VPA =< 1.25, Ativos >= 10, Vacância Física < 15%')
+Neg/dia > 1000, P/VPA =< 1.25, Ativos >= 10, Vacância Física < 15%')
 fig0.show()
 py.plot(fig0)
 # bar chart 2 - paper funds
@@ -64,6 +64,6 @@ trace12 = go.Bar(x=x1, y=rsf_paper['varpatr%'], name='%Var. Patr. Acum',
 data1 = [trace10, trace11, trace12]
 fig1 = go.Figure(data1)
 fig1.update_layout(title='ANÁLISE FIIs PAPEL | DY Ano >= 4%, Patr. > 500M, \
-    Neg/dia > 1000, P/VPA =< 1.25')
+Neg/dia > 1000, P/VPA =< 1.25')
 fig1.show()
 py.plot(fig1)
