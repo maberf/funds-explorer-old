@@ -30,7 +30,7 @@ date_time_sp = dt_sp.strftime('%d/%m/%Y %H:%M')
 # site capture and parsing
 site = WebTableParser()
 site.create('https://www.fundsexplorer.com.br/ranking',
-            'table table-hover')
+            'id', 'table-ranking')
 table = site.capture()
 df = site.parse(table)
 #
@@ -66,7 +66,7 @@ fig0.show()
 py.plot(fig0)
 print(date_time_sp)
 # bar chart 2 - paper funds
-x1 = [rsf_paper['setor'], rsf_paper['codigo']]
+'''x1 = [rsf_paper['setor'], rsf_paper['codigo']]
 trace10 = go.Bar(x=x1, y=rsf_paper['dy12macum%'], name='DY% Ano',
                  marker_color='rgb(36, 124, 220)')
 trace11 = go.Bar(x=x1, y=rsf_paper['p/vpaN'], name='P/VPA',
@@ -79,4 +79,4 @@ fig1.update_layout(title='ANÁLISE FIIs PAPEL | DY Ano >= 4%, Patr. > 500M, \
 Neg/dia > 1000, P/VPA =< 1.25')
 fig1.show()
 py.plot(fig1)
-print(date_time_sp)
+print(date_time_sp)'''
