@@ -38,20 +38,50 @@ df = site.parse(table)
 rsf = processFE_df(df)
 # real state funds (rsf) dataframe manipulation
 # MY FUNDS - specific assets choosen by user in my_rsf
-# Change the assets if necessary in the next line
+# change the assets if necessary in the next line
 my_rsf = rsf.loc[(rsf['codigo'] == 'HGRU11') | (rsf['codigo'] == 'XPLG11') |
                  (rsf['codigo'] == 'VISC11') | (rsf['codigo'] == 'SADI11') |
                  (rsf['codigo'] == 'HFOF11')]
-my_rsf['p/vpaaqN'] = 0.0
+my_rsf['precocustoR$'] = 0.0
 # add or exclude the asset P/VPA average aquisition cost in next lines
-my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'HGRU11'] = 1.17
-my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'XPLG11'] = 1.16
-my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'VISC11'] = 0.90
-my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'SADI11'] = 1.00
-my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'HFOF11'] = 1.17
-# VALUATION STRATEGY - TRACE 01 - add DY 12 months to next time_my_rsf months
+my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'HGRU11'] = 132.15
+my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'XPLG11'] = 128.28
+my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'VISC11'] = 110.57
+my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'SADI11'] = 102.00
+my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'HFOF11'] = 118.67
+# VALUATION STRATEGY - TRACE 01 - add DY to next time_my_rsf months
 # time in months you consider stays with the asset
-my_rsf_time = 36
+my_rsf_time = 12
+# SELIC - treasury bonds DY% with IRS (IRRF) tax
+selic = 2.0 * (1-0.175)
+#
+# pd.options.plotting.backend="plotly"
+py.init_notebook_mode(connected=True)
+#
+# BAR CHARTS - YOU SHOULD TO COMMENT ONE TO GET ANOTHER
+# bar chart 0 - my funds
+x0 = [my_rsf['setor'], my_rsf['codigo']]
+trace00 = go.Bar(x=x0, y=my_rsf['dy12macum%'],
+                 name='DY% Ano', marker_color='rgb(36, 124, 220)')
+trace01 = go.Bar(x=x0, y=my_rsf['precoatualR$'] *
+                 (1 + (my_rsf_time/6*my_rsf['dy6macum%']/100)),  # DY increase
+                 name='Pr. Atual R$ + N DYs', marker_color='rgb(36, 124, 220)')
+trace02 = go.Bar(x=x0, y=my_rsf['precocustoR$'] *
+                 (1 + (my_rsf_time/6*selic/100)),  # selic increase
+                 name='Pr. Custo R$', marker_color='rgb(0, 191, 255)')
+trace04 = go.Bar(x=x0, y=my_rsf['p/vpaN'],
+                 name='P/VPA', marker_color='rgb(85, 171, 124)')
+trace06 = go.Bar(x=x0, y=my_rsf['vacfisica%'],
+                 name='%Vacância Física', marker_color='rgb(228, 120, 51)')
+trace08 = go.Bar(x=x0, y=my_rsf['varpatr%'],
+                 name='%Var. Patr. Acum', marker_color='rgb(213, 83, 43)')
+data0 = [trace00, trace01, trace02, trace04, trace06, trace08]
+fig0 = go.Figure(data0)
+fig0.update_layout(title='MEUS FIIs - 12 meses')
+fig0.show()
+py.plot(fig0)
+print(f'N DYs = {my_rsf_time} meses')
+print(date_time_sp)
 #
 # real state funds (rsf) dataframe in general being filtered by criteria
 rsf = rsf.loc[rsf['dy12macum%'] >= 4.00]  # 1st filter DY > 4%
@@ -62,30 +92,6 @@ rsf = rsf.loc[rsf['p/vpaN'] <= 1.25]  # 4th filter P/VPA <= 1.25
 # splitting into two new variables: brick and paper funds
 rsf_brick = rsf.loc[rsf['qtdativosN'] >= 10]  # 5th filter >= 10 assets
 rsf_paper = rsf.loc[rsf['qtdativosN'] == 0]  # 5 th filter = 0 assets
-#
-# pd.options.plotting.backend="plotly"
-py.init_notebook_mode(connected=True)
-#
-# BAR CHARTS - YOU SHOULD TO COMMENT ONE TO GET ANOTHER
-# bar chart 0 - my funds
-x0 = [my_rsf['setor'], my_rsf['codigo']]
-trace00 = go.Bar(x=x0, y=my_rsf['dy12macum%'],
-                 name='DY% Ano', marker_color='rgb(36, 124, 220)')
-trace01 = go.Bar(x=x0, y=my_rsf['p/vpaN']+my_rsf['dy12macum%']
-                 * (my_rsf_time/12*my_rsf['dy12macum%']/100),
-                 name='P/VPA', marker_color='rgb(85, 171, 124)')
-trace02 = go.Bar(x=x0, y=my_rsf['p/vpaaqN'],
-                 name='P/VPAaq', marker_color='rgb(153, 204, 50)')
-trace03 = go.Bar(x=x0, y=my_rsf['vacfisica%'],
-                 name='%Vacância Física', marker_color='rgb(228, 120, 51)')
-trace04 = go.Bar(x=x0, y=my_rsf['varpatr%'],
-                 name='%Var. Patr. Acum', marker_color='rgb(213, 83, 43)')
-data0 = [trace00, trace01, trace02, trace03, trace04]
-fig0 = go.Figure(data0)
-fig0.update_layout(title='MEUS FIIs')
-fig0.show()
-py.plot(fig0)
-print(date_time_sp)
 #
 # bar chart 1 - brick funds
 '''x1 = [rsf_brick['setor'], rsf_brick['codigo']]
