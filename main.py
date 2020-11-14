@@ -37,10 +37,21 @@ df = site.parse(table)
 # real state fund varible, df processing to make analysis feasible (filters)
 rsf = processFE_df(df)
 # real state funds (rsf) dataframe manipulation
-# specific assets choosen by user in my_rsf - change the asset in the code
+# MY FUNDS - specific assets choosen by user in my_rsf
+# Change the assets if necessary in the next line
 my_rsf = rsf.loc[(rsf['codigo'] == 'HGRU11') | (rsf['codigo'] == 'XPLG11') |
                  (rsf['codigo'] == 'VISC11') | (rsf['codigo'] == 'SADI11') |
                  (rsf['codigo'] == 'HFOF11')]
+my_rsf['p/vpaaqN'] = 0.0
+# add or exclude the asset P/VPA average aquisition cost in next lines
+my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'HGRU11'] = 1.17
+my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'XPLG11'] = 1.16
+my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'VISC11'] = 0.90
+my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'SADI11'] = 1.00
+my_rsf['p/vpaaqN'].loc[my_rsf['codigo'] == 'HFOF11'] = 1.17
+# VALUATION STRATEGY - TRACE 01 - add DY 12 months to next time_my_rsf months
+# time in months you consider stays with the asset
+my_rsf_time = 36
 #
 # real state funds (rsf) dataframe in general being filtered by criteria
 rsf = rsf.loc[rsf['dy12macum%'] >= 4.00]  # 1st filter DY > 4%
@@ -60,13 +71,18 @@ py.init_notebook_mode(connected=True)
 x0 = [my_rsf['setor'], my_rsf['codigo']]
 trace00 = go.Bar(x=x0, y=my_rsf['dy12macum%'],
                  name='DY% Ano', marker_color='rgb(36, 124, 220)')
-trace01 = go.Bar(x=x0, y=my_rsf['p/vpaN'],
+trace01 = go.Bar(x=x0, y=my_rsf['p/vpaN']+my_rsf['dy12macum%']
+                 * (my_rsf_time/12*my_rsf['dy12macum%']/100),
                  name='P/VPA', marker_color='rgb(85, 171, 124)')
-trace02 = go.Bar(x=x0, y=my_rsf['vacfisica%'],
-                 name='%Vacância Física', marker_color='rgb(213, 83, 43)')
-data0 = [trace00, trace01, trace02]
+trace02 = go.Bar(x=x0, y=my_rsf['p/vpaaqN'],
+                 name='P/VPAaq', marker_color='rgb(153, 204, 50)')
+trace03 = go.Bar(x=x0, y=my_rsf['vacfisica%'],
+                 name='%Vacância Física', marker_color='rgb(228, 120, 51)')
+trace04 = go.Bar(x=x0, y=my_rsf['varpatr%'],
+                 name='%Var. Patr. Acum', marker_color='rgb(213, 83, 43)')
+data0 = [trace00, trace01, trace02, trace03, trace04]
 fig0 = go.Figure(data0)
-fig0.update_layout(title='MEUS FIIs | DY Acum Ano, P/VPA, Vacância Física')
+fig0.update_layout(title='MEUS FIIs')
 fig0.show()
 py.plot(fig0)
 print(date_time_sp)
@@ -78,8 +94,10 @@ trace10 = go.Bar(x=x1, y=rsf_brick['dy12macum%'],
 trace11 = go.Bar(x=x1, y=rsf_brick['p/vpaN'],
                  name='P/VPA', marker_color='rgb(85, 171, 124)')
 trace12 = go.Bar(x=x1, y=rsf_brick['vacfisica%'],
-                 name='%Vacância Física', marker_color='rgb(213, 83, 43)')
-data1 = [trace10, trace11, trace12]
+                 name='%Vacância Física', marker_color='rgb(228, 120, 51)')
+trace13 = go.Bar(x=x1, y=my_rsf['varpatr%'],
+                 name='%Var. Patr. Acum', marker_color='rgb(213, 83, 43)')
+data1 = [trace10, trace11, trace12, trace13]
 fig1 = go.Figure(data1)
 fig1.update_layout(title='ANÁLISE FIIs TIJOLOS | DY Ano >= 4%, Patr. > 500M, \
 Neg/dia > 1000, P/VPA =< 1.25, Ativos >= 10, Vacância Física < 15%')
