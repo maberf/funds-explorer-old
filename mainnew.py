@@ -131,10 +131,7 @@ for rsf_time in range(12, 48, 12):
     trace16 = go.Bar(x=x1, y=rsf_brick['vacfisica%'],
                      name='%Vacância Física',
                      marker_color='rgb(192, 192, 192)')
-    trace18 = go.Bar(x=x1, y=rsf_brick['varpatr%'],
-                     name='%Var. Patr. Acum',
-                     marker_color='rgb(211, 211, 211)')
-    data1 = [trace10, trace12, trace14, trace16, trace18]
+    data1 = [trace10, trace12, trace14, trace16]
     fig1 = go.Figure(data1)
     fig1.update_layout(title='ANÁLISE FIIs TIJOLOS | Pr.Custo=90% Pr.Atual,\
  DYAno>=3%, Patr.>500M, Neg/dia>1000, P/VPA =< 1.25, Ativos >= 10,\
