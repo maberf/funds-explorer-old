@@ -13,20 +13,22 @@
 # # !ls /content/drive/My\ Drive/ColabNotemodules/funds-explorer-filter/src
 #
 # packages: urllib, beatiful soup, html5, pandas, plotly, jupyter lab
-#
+import os
 from src.webtableparser import WebTableParser
 from src.fundsexplorer import processFE_df
 import plotly.offline as py
 import plotly.graph_objs as go
 from datetime import datetime
+from time import sleep
 from pytz import timezone
 #
 # running time reading
 # running time reading
 dt = datetime.now()
 tz = timezone('America/Sao_Paulo')
-dt_sp = dt.astimezone(tz)
-date_time_sp = dt_sp.strftime('%d/%m/%Y %H:%M')
+datetime_loc = dt.astimezone(tz)
+dt_loc = datetime_loc.strftime('%d/%m/%Y %H:%M')
+dt_loc_file = datetime_loc.strftime('%d%m%Y')
 # site capture and parsing
 site = WebTableParser()
 site.create('https://www.fundsexplorer.com.br/ranking',
@@ -34,57 +36,70 @@ site.create('https://www.fundsexplorer.com.br/ranking',
 table = site.capture()
 df = site.parse(table)
 #
-# real state fund varible, df processing to make analysis feasible (filters)
+# real state fund varible, df processing to make analysis feasible
 rsf = processFE_df(df)
-# real state funds (rsf) dataframe manipulation
-# MY FUNDS - specific assets choosen by user in my_rsf
-# change the assets if necessary in the next line
-my_rsf = rsf.loc[(rsf['codigo'] == 'HGRU11') | (rsf['codigo'] == 'XPLG11') |
-                 (rsf['codigo'] == 'VISC11') | (rsf['codigo'] == 'SADI11') |
-                 (rsf['codigo'] == 'HFOF11')]
-my_rsf['precocustoR$'] = 0.0
-# add or exclude the asset P/VPA average aquisition cost in next lines
-my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'HGRU11'] = 132.15
-my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'XPLG11'] = 128.28
-my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'VISC11'] = 110.57
-my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'SADI11'] = 102.00
-my_rsf['precocustoR$'].loc[my_rsf['codigo'] == 'HFOF11'] = 118.67
-# VALUATION STRATEGY - TRACE 01 - add DY to next time_my_rsf months
-# time in months you consider stays with the asset
-rsf_time = 24
-# treasury bonds DY% with IRS (IRRF) tax
-t_bond = 2.0 * (1-0.175)
 #
-# pd.options.plotting.backend="plotly"
 py.init_notebook_mode(connected=True)
 #
-# BAR CHARTS - YOU SHOULD TO COMMENT ONE TO GET ANOTHER
-# bar chart 0 - my funds
-'''x0 = [my_rsf['setor'], my_rsf['codigo']]
-trace00 = go.Bar(x=x0, y=my_rsf['dy12macum%'],
-                 name='DY% Ano', marker_color='rgb(36, 124, 220)')
-trace01 = go.Bar(x=x0, y=(((my_rsf['precoatualR$'] *
-                 (1 + (rsf_time/6*my_rsf['dy6macum%']/100))) /
-                 (my_rsf['precocustoR$'] * (1 + (t_bond/100)))) - 1) * 100,
-                 name='%Perf=((Pr.At+DY)/(Pr.Aq+RF)-1)',
-                 marker_color='rgb(0, 191, 255)')
-trace04 = go.Bar(x=x0, y=my_rsf['p/vpaN'],
-                 name='P/VPA', marker_color='rgb(85, 171, 124)')
-trace06 = go.Bar(x=x0, y=my_rsf['vacfisica%'],
-                 name='%Vacância Física', marker_color='rgb(228, 120, 51)')
-trace08 = go.Bar(x=x0, y=my_rsf['varpatr%'],
-                 name='%Var. Patr. Acum', marker_color='rgb(213, 83, 43)')
-data0 = [trace00, trace01, trace04, trace06, trace08]
-fig0 = go.Figure(data0)
-fig0.update_layout(title='MEUS FIIs 24 meses')
-fig0.show()
-py.plot(fig0)
-print(f'N DYs = {my_rsf_time} meses')
-print(date_time_sp)'''
+# VALUATION STRATEGY - real state funds (rsf) dataframe manipulation
+# added column in dataframe with estimated cost price -% current price
+rsf['precocustoR$'] = 0.9 * rsf['precoatualR$']
+# treasury bonds DY% with IRS (IRRF) tax
+t_bond = 2.0 * (1-0.175)
+# MY FUNDS - BUYED ASSETS - specific assets choosen by user in my_rsf
+# change the assets if necessary in the next line
+my_rsf = rsf.loc[(rsf['codigo'] == 'HGRU11') |
+                 (rsf['codigo'] == 'XPLG11') |
+                 (rsf['codigo'] == 'VISC11') |
+                 (rsf['codigo'] == 'SADI11') |
+                 (rsf['codigo'] == 'HFOF11')]
+# in the case of buyed assets, insert the real prices in dataframe
+# add or exclude the asset price average aquisition cost in next lines
+my_rsf.loc[my_rsf['codigo'] == 'HGRU11', 'precocustoR$'] = 132.15
+my_rsf.loc[my_rsf['codigo'] == 'XPLG11', 'precocustoR$'] = 128.28
+my_rsf.loc[my_rsf['codigo'] == 'VISC11', 'precocustoR$'] = 110.57
+my_rsf.loc[my_rsf['codigo'] == 'SADI11', 'precocustoR$'] = 102.00
+my_rsf.loc[my_rsf['codigo'] == 'HFOF11', 'precocustoR$'] = 118.67
+# MY FUNDS SCENARIO - time in months valuating the asset
+for rsf_time in range(12, 24, 12):
+    # my funds % performance over treasury bond calculation
+    my_rsf['perf%'] = (((my_rsf['precoatualR$']
+                        * (1 + (rsf_time / 6 * rsf['dy6macum%'] / 100)))
+                        / (my_rsf['precocustoR$']
+                        * (1 + t_bond / 100))) - 1) * 100
+    my_rsf = my_rsf.sort_values(by='perf%', ascending=False)
+    # bar chart 0 - MY FUNDS
+    x0 = [my_rsf['setor'], my_rsf['codigo']]
+    trace00 = go.Bar(x=x0, y=my_rsf['perf%'],
+                     name='Perf%=((Pr.At+DY)/(Pr.Ct+RF)-1)',
+                     marker_color='rgb(70, 130, 180)')
+    trace02 = go.Bar(x=x0, y=my_rsf['dy12macum%'],
+                     name='DY% Ano', marker_color='rgb(135, 206, 250)')
+    trace04 = go.Bar(x=x0, y=my_rsf['p/vpaN'],
+                     name='P/VPA', marker_color='rgb(176, 196, 222)')
+    trace06 = go.Bar(x=x0, y=my_rsf['vacfisica%'],
+                     name='%Vacância Física',
+                     marker_color='rgb(192, 192, 192)')
+    trace08 = go.Bar(x=x0, y=my_rsf['varpatr%'],
+                     name='%Var. Patr. Acum',
+                     marker_color='rgb(211, 211, 211)')
+    data0 = [trace00, trace02, trace04, trace06, trace08]
+    fig0 = go.Figure(data0)
+    fig0.update_layout(title='MEUS FIIs')
+    py.plot(fig0)
+    # fig0.show()  # to use with Jupyter Notebook
+    # print(f'N DYs = {rsf_time} meses')
+    # print(dt_loc)
+    sleep(8)
+    # rename and move tmp files files generated by plotly
+    os.rename('temp-plot.html',
+              'C:/Users/maber/OneDrive/Documentos/3_Financas/FIIs/myrsf_'
+              + str(rsf_time) + 'm_' + dt_loc_file+'.html')
 #
 # real state funds (rsf) dataframe in general being filtered by criteria
-rsf = rsf.loc[rsf['dy12macum%'] >= 6.00]  # 1st filter DY >= 3%
-rsf = rsf.sort_values(by='dy12macum%',  ascending=False)
+# cost price set again as % current price
+rsf['precocustoR$'] = 0.9 * rsf['precoatualR$']
+rsf = rsf.loc[rsf['dy12macum%'] >= 3.00]  # 1st filter DY >= 3%
 rsf = rsf.loc[rsf['patrliqR$'] >= 500000000.00]  # 2nd filter > BRL 500 M
 rsf = rsf.loc[rsf['liqdiariaNeg'] >= 1000]  # 3rd filter tradings >= 1000/day
 rsf = rsf.loc[rsf['p/vpaN'] <= 1.25]  # 4th filter P/VPA <= 1.25
@@ -93,42 +108,73 @@ rsf = rsf.loc[rsf['vacfisica%'] <= 15]  # 5th filter vacancy =< 15%
 rsf_brick = rsf.loc[rsf['qtdativosN'] >= 10]  # 6th filter >= 10 assets
 rsf_paper = rsf.loc[rsf['qtdativosN'] == 0]  # 6th filter = 0 assets
 #
-# bar chart 1 - brick funds
-x1 = [rsf_brick['setor'], rsf_brick['codigo']]
-trace10 = go.Bar(x=x1, y=rsf_brick['dy12macum%'],
-                 name='DY% Ano', marker_color='rgb(36, 124, 220)')
-trace11 = go.Bar(x=x1, y=(((my_rsf['precoatualR$'] *
-                 (1 + (rsf_time/6*my_rsf['dy6macum%']/100))) /
-                 (0.95*my_rsf['precoatualR$'] * (1 + (t_bond/100)))) - 1)*100,
-                 name='%Perf=((Pr.At+DY)/(Pr.Aq+RF)-1)',
-                 marker_color='rgb(0, 191, 255)')
-trace14 = go.Bar(x=x1, y=rsf_brick['p/vpaN'],
-                 name='P/VPA', marker_color='rgb(85, 171, 124)')
-trace16 = go.Bar(x=x1, y=rsf_brick['vacfisica%'],
-                 name='%Vacância Física', marker_color='rgb(228, 120, 51)')
-trace18 = go.Bar(x=x1, y=my_rsf['varpatr%'],
-                 name='%Var. Patr. Acum', marker_color='rgb(213, 83, 43)')
-data1 = [trace10, trace11, trace14, trace16, trace18]
-fig1 = go.Figure(data1)
-fig1.update_layout(title='ANÁLISE FIIs TIJOLOS 24 meses| DY Ano >= 3%, Patr. > 500M, \
-Neg/dia > 1000, P/VPA =< 1.25, Ativos >= 10, Vacância Física < 15%')
-fig1.show()
-py.plot(fig1)
-print(date_time_sp)
-#
-# bar chart 2 - paper funds
-'''x2 = [rsf_paper['setor'], rsf_paper['codigo']]
-trace20 = go.Bar(x=x2, y=rsf_paper['dy12macum%'], name='DY% Ano',
-                 marker_color='rgb(36, 124, 220)')
-trace24 = go.Bar(x=x2, y=rsf_paper['p/vpaN'], name='P/VPA',
-                 marker_color='rgb(85, 171, 124)')
-trace26 = go.Bar(x=x2, y=rsf_paper['varpatr%'], name='%Var. Patr. Acum',
-                 marker_color='rgb(213, 83, 43)')
-data2 = [trace20, trace24, trace26]
-fig2 = go.Figure(data2)
-fig2.update_layout(title='ANÁLISE FIIs PAPEL | DY Ano >= 4%, Patr. > 500M, \
-Neg/dia > 1000, P/VPA =< 1.25')
-fig2.show()
-py.plot(fig2)
-print(date_time_sp)'''
-#
+'''# BRICK FUNDS SCENARIO - time in months valuating the asset
+for rsf_time in range(12, 48, 12):
+    rsf_brick['perf%'] = (((rsf_brick['precoatualR$'] *
+                          (1 + (rsf_time / 6 * rsf_brick['dy6macum%'] / 100)))
+                          / (rsf_brick['precocustoR$'] * (1 + t_bond / 100)))
+                          - 1) * 100
+    rsf_brick = rsf_brick.sort_values(by='perf%', ascending=False)
+    # bar chart 1 - BRICK FUNDS
+    x1 = [rsf_brick['setor'], rsf_brick['codigo']]
+    trace10 = go.Bar(x=x1, y=rsf_brick['perf%'],
+                     name='Perf%=((Pr.At+DY)/(Pr.Ct+RF)-1)',
+                     marker_color='rgb(70, 130, 180)')
+    trace12 = go.Bar(x=x1, y=rsf_brick['dy12macum%'],
+                     name='DY% Ano', marker_color='rgb(135, 206, 250)')
+    trace14 = go.Bar(x=x1, y=rsf_brick['p/vpaN'],
+                     name='P/VPA', marker_color='rgb(176, 196, 222)')
+    trace16 = go.Bar(x=x1, y=rsf_brick['vacfisica%'],
+                     name='%Vacância Física',
+                     marker_color='rgb(192, 192, 192)')
+    trace18 = go.Bar(x=x1, y=rsf_brick['varpatr%'],
+                     name='%Var. Patr. Acum',
+                     marker_color='rgb(211, 211, 211)')
+    data1 = [trace10, trace12, trace14, trace16, trace18]
+    fig1 = go.Figure(data1)
+    fig1.update_layout(title='ANÁLISE FIIs TIJOLOS | Pr.Custo=90% Pr.Atual,\
+ DYAno>=3%, Patr.>500M, Neg/dia>1000, P/VPA =< 1.25, Ativos >= 10,\
+ Vac.Física < 15%')
+    py.plot(fig1)
+    # fig1.show()  # to use with Jupyter Notebook
+    # print(f'N DYs = {rsf_time} meses')
+    # print(dt_loc)
+    sleep(8)
+    # rename and move tmp files files generated by plotly
+    os.rename('temp-plot.html',
+              'C:/Users/maber/OneDrive/Documentos/3_Financas/FIIs/rsf_brick'
+              + str(rsf_time) + 'm_' + dt_loc_file+'.html')
+#'''
+'''# PAPER FUNDS SCENARIO - time in months valuating the asset
+for rsf_time in range(12, 48, 12):
+    rsf_paper['perf%'] = (((rsf_paper['precoatualR$'] *
+                          (1 + (rsf_time / 6 * rsf_paper['dy6macum%'] / 100)))
+                          / (rsf_paper['precocustoR$'] * (1 + t_bond / 100)))
+                          - 1) * 100
+    rsf_paper = rsf_paper.sort_values(by='perf%', ascending=False)
+    # bar chart 2 - PAPER FUNDS
+    x2 = [rsf_paper['setor'], rsf_paper['codigo']]
+    trace20 = go.Bar(x=x2, y=rsf_paper['perf%'],
+                     name='Perf%=((Pr.At+DY)/(Pr.Ct+RF)-1)',
+                     marker_color='rgb(70, 130, 180)')
+    trace22 = go.Bar(x=x2, y=rsf_paper['dy12macum%'],
+                     name='DY% Ano', marker_color='rgb(135, 206, 250)')
+    trace24 = go.Bar(x=x2, y=rsf_paper['p/vpaN'],
+                     name='P/VPA', marker_color='rgb(176, 196, 222)')
+    trace28 = go.Bar(x=x2, y=rsf_paper['varpatr%'],
+                     name='%Var. Patr. Acum',
+                     marker_color='rgb(211, 211, 211)')
+    data2 = [trace20, trace22, trace24, trace28]
+    fig2 = go.Figure(data2)
+    fig2.update_layout(title='ANÁLISE FIIs PAPEL | Pr.Custo=90%Pr.Atual,\
+ DYAno>=3%, Patr.>500M, Neg/dia>1000, P/VPA =< 1.25')
+    py.plot(fig2)
+    # fig2.show()  # to use with Jupyter Notebook
+    # print(f'N DYs = {rsf_time} meses')
+    # print(dt_loc)
+    sleep(8)
+    # rename and move tmp files files generated by plotly
+    os.rename('temp-plot.html',
+              'C:/Users/maber/OneDrive/Documentos/3_Financas/FIIs/rsf_paper'
+              + str(rsf_time) + 'm_' + dt_loc_file+'.html')
+#'''
