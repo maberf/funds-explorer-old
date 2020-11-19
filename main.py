@@ -13,6 +13,7 @@
 # # !ls /content/drive/My\ Drive/ColabNotemodules/funds-explorer-filter/src
 #
 # packages: urllib, beatiful soup, html5, pandas, plotly, jupyter lab
+# plotly, datetime, time, pytz, pandas_datareader, math
 import os
 from src.webtableparser import WebTableParser
 from src.fundsexplorer import process_FE
