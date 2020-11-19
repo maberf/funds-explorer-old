@@ -6,7 +6,7 @@
 #
 # import sys
 # # Create a folder named src and put the modules webtableparser
-# # and fundsexplorer into it
+# # fundsexplorer and yahoofinance into it
 # sys.path.append('/content/drive/My Drive/\
 # ColabNotemodules/funds-explorer-filter')
 # # To check the modules are being reacheble by this code (linux command)
@@ -15,7 +15,8 @@
 # packages: urllib, beatiful soup, html5, pandas, plotly, jupyter lab
 import os
 from src.webtableparser import WebTableParser
-from src.fundsexplorer import processFE_df
+from src.fundsexplorer import process_FE
+from src.yahoofinance import costPrice_YF
 import plotly.offline as py
 import plotly.graph_objs as go
 from datetime import datetime
@@ -36,20 +37,18 @@ table = site.capture()
 df = site.parse(table)
 #
 # real state fund varible, df processing to make analysis feasible
-rsf = processFE_df(df)
+rsf = process_FE(df)
+del df
 #
 py.init_notebook_mode(connected=True)
 #
 # VALUATION STRATEGY - real state funds (rsf) dataframe manipulation
-# added column in dataframe with estimated cost price -% current price
-rsf['precocustoR$'] = 0.9 * rsf['precoatualR$']
-# added column in dataframe with percentage of performance
-rsf['perf%'] = 0
 # treasury bonds DY% with IRS (IRRF) tax
 t_bond = 2.0 * (1-0.175)
+#
 # MY FUNDS - BUYED ASSETS - specific assets choosen by user in my_rsf
-# change the assets if necessary in the next line
 my_rsf = rsf.copy()
+# change the assets if necessary in the next line
 my_rsf = my_rsf.loc[(rsf['codigo'] == 'HGRU11') |
                     (rsf['codigo'] == 'XPLG11') |
                     (rsf['codigo'] == 'VISC11') |
@@ -104,6 +103,17 @@ rsf = rsf.loc[rsf['patrliqR$'] >= 500000000.00]  # 2nd filter > BRL 500 M
 rsf = rsf.loc[rsf['liqdiariaNeg'] >= 1000]  # 3rd filter tradings >= 1000/day
 rsf = rsf.loc[rsf['p/vpaN'] <= 1.25]  # 4th filter P/VPA <= 1.25
 rsf = rsf.loc[rsf['vacfisica%'] <= 15]  # 5th filter vacancy =< 15%
+# adding column to a target cost price - average minus 1 standard deviation
+# in case of NaN, cost price filled with 90% of current price
+df = rsf.copy()
+rsf = costPrice_YF(df, 500)
+del df
+# added column in dataframe with performance
+rsf['overprice%'] = round(((rsf['precoatualR$'] /
+                          rsf['precocustoR$'] - 1) * 100), 2)
+# added column in dataframe with
+rsf['perf%'] = 0
+# print(rsf2)
 # splitting into brick and paper funds
 rsf_brick = rsf.copy()
 rsf_brick = rsf_brick.loc[rsf['qtdativosN'] >= 10]  # 6th filter >= 10 assets
@@ -112,13 +122,20 @@ rsf_paper = rsf_paper.loc[rsf['qtdativosN'] == 0]  # 6th filter = 0 assets
 #
 # BRICK FUNDS SCENARIO - time in months valuating the asset
 for rsf_time in range(12, 48, 12):
-    rsf_brick['perf%'] = ((rsf_brick['precoatualR$']
-                           * (1 + ((rsf_time / 6) * (rsf['dy6macum%'] / 100))))
-                          / (rsf_brick['precocustoR$']
-                          * (1 + ((rsf_time / 6) * (t_bond / 100)))) - 1) * 100
+    rsf_brick['perf%'] = round(((rsf_brick['precoatualR$']
+                                * (1 + ((rsf_time / 6)
+                                 * (rsf['dy6macum%'] / 100))))
+                                / (rsf_brick['precocustoR$']
+                                * (1 + ((rsf_time / 6)
+                                   * (t_bond / 100)))) - 1) * 100, 2)
     rsf_brick = rsf_brick.sort_values(by='perf%', ascending=False)
-    if rsf_time == 36:
-        rsf_brick.to_excel('C:/Users/maber/OneDrive/Documentos/3_Financas/FIIs/rsf_brick' + dt_loc_file+'.xlsx', columns=['codigo', 'setor', 'perf%', 'p/vpaN', 'precocustoR$'], float_format="%.2f")
+    if rsf_time == 12:
+        rsf_brick.to_excel(
+            'C:/Users/maber/OneDrive/Documentos/3_Financas/FIIs/rsf_brick'
+            + dt_loc_file + '.xlsx',
+            columns=['codigo', 'setor', 'perf%', 'p/vpaN', 'precoatualR$',
+                     'precocustoR$', 'overprice%'], float_format="%.2f")
+        print(rsf_brick)
     # bar chart 1 - BRICK FUNDS
     '''x1 = [rsf_brick['setor'], rsf_brick['codigo']]
     trace10 = go.Bar(x=x1, y=rsf_brick['perf%'],
@@ -153,8 +170,12 @@ for rsf_time in range(12, 48, 12):
                           / (rsf_paper['precocustoR$']
                           * (1 + ((rsf_time / 6) * (t_bond / 100)))) - 1) * 100
     rsf_paper = rsf_paper.sort_values(by='perf%', ascending=False)
-    if rsf_time == 36:
-        rsf_paper.to_excel('C:/Users/maber/OneDrive/Documentos/3_Financas/FIIs/rsf_paper' + dt_loc_file+'.xlsx', columns=['codigo', 'setor', 'perf%', 'p/vpaN', 'precocustoR$'], float_format="%.2f")
+    if rsf_time == 24:
+        rsf_paper.to_excel(
+            'C:/Users/maber/OneDrive/Documentos/3_Financas/FIIs/rsf_paper'
+            + dt_loc_file + '.xlsx',
+            columns=['codigo', 'setor', 'perf%', 'p/vpaN', 'precoatualR$',
+                     'precocustoR$', 'overprice%'], float_format="%.2f")
     # bar chart 2 - PAPER FUNDS
     '''x2 = [rsf_paper['setor'], rsf_paper['codigo']]
     trace20 = go.Bar(x=x2, y=rsf_paper['perf%'],

@@ -2,7 +2,7 @@ import pandas as pd
 # import re
 
 
-def processFE_df(df):
+def process_FE(df):
     """Function to process Pandas dataframe from Funds Explorer site:
     'https://www.fundsexplorer.com.br/ranking'
     After this function the DataFrame can be filtered to analysis
